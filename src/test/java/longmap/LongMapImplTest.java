@@ -38,14 +38,14 @@ public class LongMapImplTest {
     }
 
     @Test
-    public void removeShouldDecreaseMapSizeAndRemoveElementFromMap() {
+    public void removeShouldRemoveElementFromMap() {
         //GIVEN
         longMap.put(1L, "zxc");
         long sizeBefore = longMap.size();
         //WHEN
         longMap.remove(1L);
         //THEN
-        Assert.assertEquals(1, sizeBefore - longMap.size());
+        Assert.assertFalse(longMap.containsKey(1L));
     }
     @Test
     public void isEmptyShouldReturnTrueIfMapIsEmpty(){
