@@ -8,12 +8,25 @@ import java.util.stream.Collectors;
 
 public class LongMapImpl<V> implements LongMap<V> {
 
+    private float loadFactor;
     private final V[] valueArray;
     private final List<List<Node<V>>> buckets = new ArrayList<>();
 
     public LongMapImpl(Class<V> clazz) {
         @SuppressWarnings("unchecked") final V[] a = (V[]) Array.newInstance(clazz, 0);
         this.valueArray = a;
+        this.loadFactor = 0.75f;
+        addBuckets();
+    }
+
+    public LongMapImpl(Class<V> clazz, float loadFactor) {
+        if (loadFactor > 1 || loadFactor < 0) {
+            throw new RuntimeException("Load factor should be more than 0 and less then 1");
+        }
+        @SuppressWarnings("unchecked") final V[] a = (V[]) Array.newInstance(clazz, 0);
+        this.valueArray = a;
+        this.loadFactor = loadFactor;
+        addBuckets();
     }
 
     public V put(long key, V value) {
@@ -21,17 +34,9 @@ public class LongMapImpl<V> implements LongMap<V> {
         node.setKey(key);
         node.setValue(value);
 
-        if (buckets.isEmpty()) {
-            addBuckets();
-            int bucketIndex = getBucketIndex(node);
-            List<Node<V>> bucket = buckets.get(bucketIndex);
-            bucket.add(node);
-            return node.getValue();
-        }
-
         if (buckets.stream()
                 .filter(x -> !x.isEmpty())
-                .count() / (float) buckets.size() > 0.75) {
+                .count() / (float) buckets.size() > loadFactor) {
             addBuckets();
         }
 

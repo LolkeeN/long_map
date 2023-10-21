@@ -2,6 +2,8 @@ package longmap;
 
 import de.comparus.opensource.longmap.LongMap;
 import de.comparus.opensource.longmap.LongMapImpl;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.After;
@@ -127,5 +129,22 @@ public class LongMapImplTest {
         Assert.assertTrue(valueList.contains("asd"));
         Assert.assertTrue(valueList.contains("zxc"));
         Assert.assertFalse(valueList.contains("vbn"));
+    }
+
+    @Test
+    public void putShouldIncreaseMapBucketsSizeWhenAdding4Element() throws NoSuchFieldException, IllegalAccessException {
+        //GIVEN
+        Field field = longMap.getClass().getDeclaredField("buckets");
+        field.setAccessible(true);
+        ArrayList buckets = (ArrayList) field.get(longMap);
+        longMap.put(1L, "qwe");
+        longMap.put(2L, "qwe");
+        longMap.put(3L, "qwe");
+        longMap.put(4L, "qwe");
+        Assert.assertEquals(5, buckets.size());
+        //WHEN
+        longMap.put(5L, "qwe");
+        //THEN
+        Assert.assertEquals(10, buckets.size());
     }
 }
