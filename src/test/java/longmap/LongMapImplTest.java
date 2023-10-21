@@ -145,6 +145,7 @@ public class LongMapImplTest {
         //WHEN
         longMap.put(5L, "qwe");
         //THEN
-        Assert.assertEquals(10, buckets.size());
+        ArrayList bucketsAfter = (ArrayList) field.get(longMap);
+        Assert.assertEquals(10, bucketsAfter.size());
     }
 }

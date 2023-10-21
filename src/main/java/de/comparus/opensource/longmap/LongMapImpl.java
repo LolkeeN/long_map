@@ -10,13 +10,13 @@ public class LongMapImpl<V> implements LongMap<V> {
 
     private float loadFactor;
     private final V[] valueArray;
-    private final List<List<Node<V>>> buckets = new ArrayList<>();
+    private List<List<Node<V>>> buckets = new ArrayList<>();
 
     public LongMapImpl(Class<V> clazz) {
         @SuppressWarnings("unchecked") final V[] a = (V[]) Array.newInstance(clazz, 0);
         this.valueArray = a;
         this.loadFactor = 0.75f;
-        addBuckets();
+        addBuckets(5);
     }
 
     public LongMapImpl(Class<V> clazz, float loadFactor) {
@@ -26,29 +26,48 @@ public class LongMapImpl<V> implements LongMap<V> {
         @SuppressWarnings("unchecked") final V[] a = (V[]) Array.newInstance(clazz, 0);
         this.valueArray = a;
         this.loadFactor = loadFactor;
-        addBuckets();
+        addBuckets(5);
     }
 
+    @Override
     public V put(long key, V value) {
         Node<V> node = new Node<>();
         node.setKey(key);
         node.setValue(value);
 
-        if (buckets.stream()
-                .filter(x -> !x.isEmpty())
-                .count() / (float) buckets.size() > loadFactor) {
-            addBuckets();
+        if (needToRehash()) {
+            rehash();
         }
 
+        insertNodeIntoBucket(node, buckets);
+        return node.getValue();
+    }
+
+    private void rehash() {
+        List<List<Node<V>>> newBuckets = new ArrayList<>(buckets.size() + 5);
+        for (int i = 0; i < buckets.size() + 5; i++) {
+            newBuckets.add(new ArrayList<>());
+        }
+        for (List<Node<V>> nodes : buckets) {
+            for (Node<V> bucketNode : nodes) {
+                insertNodeIntoBucket(bucketNode, newBuckets);
+            }
+        }
+        buckets = newBuckets;
+    }
+
+    private boolean needToRehash() {
+        return size() / (float) buckets.size() > loadFactor;
+    }
+
+    private void insertNodeIntoBucket(Node<V> node, List<List<Node<V>>> buckets) {
         int bucketIndex = getBucketIndex(node);
         List<Node<V>> bucket = buckets.get(bucketIndex);
         if (!buckets.get(bucketIndex).isEmpty()) {
             bucket.add(node);
             bucket.get(bucket.size() - 1).setNext(node);
-            return node.getValue();
         } else {
             bucket.add(node);
-            return node.getValue();
         }
     }
 
@@ -56,12 +75,13 @@ public class LongMapImpl<V> implements LongMap<V> {
         return node.hashCode() % buckets.size();
     }
 
-    private void addBuckets() {
-        for (int i = 0; i < 5; i++) {
+    private void addBuckets(int count) {
+        for (int i = 0; i < count; i++) {
             buckets.add(new ArrayList<>());
         }
     }
 
+    @Override
     public V get(long key) {
         Node<V> node = new Node<>();
         node.setKey(key);
@@ -70,13 +90,14 @@ public class LongMapImpl<V> implements LongMap<V> {
             return null;
         }
         for (Node<V> nodeInBucket : nodes) {
-            if(nodeInBucket.getKey() == key){
+            if (nodeInBucket.getKey() == key) {
                 return nodeInBucket.value;
             }
         }
         return null;
     }
 
+    @Override
     public V remove(long key) {
         Node<V> node = new Node<>();
         node.setKey(key);
@@ -91,11 +112,13 @@ public class LongMapImpl<V> implements LongMap<V> {
         return resultNode == null ? null : resultNode.getValue();
     }
 
+    @Override
     public boolean isEmpty() {
         return buckets.isEmpty() || buckets.stream()
                 .allMatch(List::isEmpty);
     }
 
+    @Override
     public boolean containsKey(long key) {
         boolean contains;
         for (List<Node<V>> bucket : buckets) {
@@ -109,6 +132,7 @@ public class LongMapImpl<V> implements LongMap<V> {
         return false;
     }
 
+    @Override
     public boolean containsValue(V value) {
         boolean contains;
         for (List<Node<V>> bucket : buckets) {
@@ -122,6 +146,7 @@ public class LongMapImpl<V> implements LongMap<V> {
         return false;
     }
 
+    @Override
     public long[] keys() {
         return buckets.stream()
                 .mapToLong(x -> x.stream()
@@ -131,6 +156,7 @@ public class LongMapImpl<V> implements LongMap<V> {
                 .toArray();
     }
 
+    @Override
     public V[] values() {
         List<V> collect = buckets.stream()
                 .flatMap(x -> x.stream()
@@ -139,12 +165,15 @@ public class LongMapImpl<V> implements LongMap<V> {
         return toArray(collect);
     }
 
+    @Override
     public long size() {
         return buckets.stream()
                 .filter(x -> !x.isEmpty())
-                .count();
+                .mapToLong(x -> (long) x.size())
+                .reduce(Long::sum).orElse(0);
     }
 
+    @Override
     public void clear() {
         buckets.clear();
     }
