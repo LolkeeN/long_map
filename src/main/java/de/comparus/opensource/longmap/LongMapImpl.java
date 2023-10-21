@@ -69,7 +69,12 @@ public class LongMapImpl<V> implements LongMap<V> {
         if (nodes.isEmpty()) {
             return null;
         }
-        return nodes.get(0).getValue();
+        for (Node<V> nodeInBucket : nodes) {
+            if(nodeInBucket.getKey() == key){
+                return nodeInBucket.value;
+            }
+        }
+        return null;
     }
 
     public V remove(long key) {
