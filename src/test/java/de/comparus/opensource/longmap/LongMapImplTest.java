@@ -1,4 +1,4 @@
-package longmap;
+package de.comparus.opensource.longmap;
 
 import de.comparus.opensource.longmap.LongMap;
 import de.comparus.opensource.longmap.LongMapImpl;
