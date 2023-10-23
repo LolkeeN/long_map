@@ -123,7 +123,8 @@ public class LongMapImpl<V> implements LongMap<V> {
         boolean contains;
         for (List<Node<V>> bucket : buckets) {
             if (!bucket.isEmpty()) {
-                contains = bucket.get(0).getKey() == key;
+                contains = bucket.stream()
+                        .anyMatch(x -> x.getKey() == key);
                 if (contains) {
                     return true;
                 }
@@ -137,7 +138,8 @@ public class LongMapImpl<V> implements LongMap<V> {
         boolean contains;
         for (List<Node<V>> bucket : buckets) {
             if (!bucket.isEmpty()) {
-                contains = bucket.get(0).getValue().equals(value);
+                contains = bucket.stream()
+                        .anyMatch(x -> x.getValue().equals(value));
                 if (contains) {
                     return true;
                 }
